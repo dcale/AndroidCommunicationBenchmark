@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">AndroidCommunicationBenchmark</string>
+    <string name="status">Status</string>
+    <string name="start_server">Start Server</string>
+    <string name="start_client">Start Client</string>
+    <string name="benchmark_stored">Benchmark stored</string>
+    <string name="stop">Stop</string>
+    <string name="log">Log:</string>
+</resources>
