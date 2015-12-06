@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/benchmark_preferences">
+
+        <EditTextPreference
+            android:defaultValue="10"
+            android:dialogTitle="@string/pref_cycle_count"
+            android:inputType="number"
+            android:numeric="integer"
+            android:key="pref_cycle_count"
+            android:summary="@string/pref_cycle_count_summary"
+            android:title="@string/pref_cycle_count" />
+
+        <EditTextPreference
+            android:defaultValue="4096"
+            android:dialogTitle="@string/pref_payload_size"
+            android:numeric="integer"
+            android:inputType="number"
+            android:key="pref_payload_size"
+            android:summary="@string/pref_payload_size_summary"
+            android:title="@string/pref_payload_size" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

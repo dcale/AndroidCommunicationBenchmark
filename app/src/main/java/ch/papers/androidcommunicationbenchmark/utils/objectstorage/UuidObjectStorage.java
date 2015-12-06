@@ -8,9 +8,8 @@ package ch.papers.androidcommunicationbenchmark.utils.objectstorage;
 
 import android.content.Context;
 
-import com.google.gson.reflect.TypeToken;
-
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -21,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import ch.papers.androidcommunicationbenchmark.communication.Constants;
+import ch.papers.androidcommunicationbenchmark.utils.Constants;
 import ch.papers.androidcommunicationbenchmark.utils.objectstorage.listeners.OnResultListener;
 import ch.papers.androidcommunicationbenchmark.utils.objectstorage.listeners.OnStorageChangeListener;
 import ch.papers.androidcommunicationbenchmark.utils.objectstorage.models.UuidObject;
@@ -33,7 +32,6 @@ public class UuidObjectStorage {
     public static UuidObjectStorage getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new UuidObjectStorage();
-
         }
         return INSTANCE;
     }
@@ -54,7 +52,7 @@ public class UuidObjectStorage {
             @Override
             public void run() {
                 try {
-                    UuidObjectStorage.this.getOrCreateClassCache(clazz).put(entry.getUuid(), entry);
+                    UuidObjectStorage.this.<T>getOrCreateClassCache(clazz).put(entry.getUuid(), entry);
                     persistEntries(clazz);
                     if(resultCallback!=null) {
                         resultCallback.onSuccess(entry);
@@ -74,7 +72,7 @@ public class UuidObjectStorage {
             @Override
             public void run() {
                 try {
-                    UuidObjectStorage.this.getOrCreateClassCache(clazz).remove(entry.getUuid());
+                    UuidObjectStorage.this.<T>getOrCreateClassCache(clazz).remove(entry.getUuid());
                     persistEntries(clazz);
                     if(resultCallback!=null) {
                         resultCallback.onSuccess(entry);
@@ -94,7 +92,7 @@ public class UuidObjectStorage {
             @Override
             public void run() {
                 try {
-                    resultCallback.onSuccess(UuidObjectStorage.this.getOrCreateClassCache(clazz));
+                    resultCallback.onSuccess(UuidObjectStorage.this.<T>getOrCreateClassCache(clazz));
                 } catch (Throwable e) {
                     resultCallback.onError(e.getMessage());
                 }
@@ -107,8 +105,9 @@ public class UuidObjectStorage {
             @Override
             public void run() {
                 try {
-                    resultCallback.onSuccess(new ArrayList<T>(UuidObjectStorage.this.getOrCreateClassCache(clazz).values()));
+                    resultCallback.onSuccess(new ArrayList<T>(UuidObjectStorage.this.<T>getOrCreateClassCache(clazz).values()));
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     resultCallback.onError(e.getMessage());
                 }
             }
@@ -120,7 +119,7 @@ public class UuidObjectStorage {
             @Override
             public void run() {
                 try {
-                    T entry = (T) UuidObjectStorage.this.getOrCreateClassCache(clazz).get(uuid);
+                    T entry = (T) UuidObjectStorage.this.<T>getOrCreateClassCache(clazz).get(uuid);
                     if (entry != null) {
                         resultCallback.onSuccess(entry);
                     } else {
@@ -161,7 +160,7 @@ public class UuidObjectStorage {
     private synchronized <T extends UuidObject> Map<UUID, T> getOrCreateClassCache(final Class<T> clazz) throws FileNotFoundException {
         try {
             if (!this.uuidObjectCache.containsKey(clazz)) {
-                this.loadEntries(clazz);
+                this.<T>loadEntries(clazz);
             }
         } catch (FileNotFoundException e) {
 
@@ -178,17 +177,19 @@ public class UuidObjectStorage {
     }
 
     private synchronized void persistEntries(Class<? extends UuidObject> clazz) throws FileNotFoundException {
-        Appendable fileOutputStreamAppendable = new OutputStreamWriter(this.context.openFileOutput(clazz.getSimpleName() + ".json", Context.MODE_PRIVATE));
-        Constants.GSON.toJson(this.uuidObjectCache.get(clazz), fileOutputStreamAppendable);
+        OutputStreamWriter fileOutputStreamWriter = new OutputStreamWriter(this.context.openFileOutput(clazz.getSimpleName() + ".json", Context.MODE_PRIVATE));
+        Constants.GSON.toJson(this.uuidObjectCache.get(clazz), fileOutputStreamWriter);
+        try {
+            fileOutputStreamWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private synchronized <T extends UuidObject> void loadEntries(Class<T> clazz) throws FileNotFoundException {
         this.uuidObjectCache.remove(clazz);
         Reader fileInputStreamReader = new InputStreamReader(this.context.openFileInput(clazz.getSimpleName() + ".json"));
-        Constants.GSON.fromJson("bla",String.class);
-
-        final Map<UUID, T> entriesMap = Constants.GSON.fromJson(fileInputStreamReader, new TypeToken<Map<UUID, T>>() {
-        }.getType());
+        final Map<UUID, T> entriesMap = Constants.GSON.fromJson(fileInputStreamReader, new UuidObjectMapType(clazz));
         this.uuidObjectCache.put(clazz, entriesMap);
     }
 

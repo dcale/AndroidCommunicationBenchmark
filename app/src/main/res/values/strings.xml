@@ -4,6 +4,29 @@
     <string name="start_server">Start Server</string>
     <string name="start_client">Start Client</string>
     <string name="benchmark_stored">Benchmark stored</string>
-    <string name="stop">Stop</string>
+    <string name="stop_server">Stop Server</string>
+    <string name="stop_client">Stop Client</string>
     <string name="log">Log:</string>
+
+    <string name="latency_string">%.2f s latency</string>
+    <string name="bandwidth_string">%.2f kB/s bandwidth</string>
+
+    <string name="list_benchmark">Benchmark List</string>
+    <string name="wifi_benchmark">WiFi Direct Benchmark</string>
+    <string name="bluetooth_rfcomm_benchmark">Bluetooth RFCOMM Benchmark</string>
+    <string name="bluetooth_le_benchmark">Bluetooth LE Benchmark</string>
+    <string name="nfc_benchmark">NFC Benchmark</string>
+
+
+    <string name="aiddescription">aiddescription</string>
+    <string name="servicedesc">servicedesc</string>
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
+    <string name="preferences">Preferences</string>
+    <string name="pref_cycle_count">Cycle Count</string>
+    <string name="pref_cycle_count_summary">How many times should the payload be sent</string>
+    <string name="pref_payload_size">Payload Size</string>
+    <string name="pref_payload_size_summary">How big is the payload size</string>
+    <string name="benchmark_preferences">Benchmark Preferences</string>
+
 </resources>

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
+import ch.papers.androidcommunicationbenchmark.utils.Preferences;
 
 /**
  * Created by Alessandro De Carli (@a_d_c_) on 30/11/15.
@@ -24,7 +25,7 @@ public class EchoServerHandler implements Runnable {
     @Override
     public void run() {
         try {
-            byte[] buffer = new byte[Constants.DEFAULT_BUFFER_SIZE];
+            byte[] buffer = new byte[Preferences.getInstance().getPayloadSize()];
             int readBytes = 0;
             while ((readBytes = this.inputStream.read(buffer)) > 0) {
                 Logger.getInstance().log("server","read bytes: "+readBytes);

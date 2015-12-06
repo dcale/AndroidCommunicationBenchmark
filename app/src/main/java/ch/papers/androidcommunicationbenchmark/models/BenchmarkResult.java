@@ -10,13 +10,17 @@ import ch.papers.androidcommunicationbenchmark.utils.objectstorage.models.UuidOb
  * a.decarli@papers.ch
  */
 public class BenchmarkResult extends UuidObject {
-    public class ConnectionTechonology{
-        public final static short BLUETOOTH = 1;
+    public class ConnectionTechonology {
+        public final static short BLUETOOTH_RFCOMM = 1;
         public final static short WIFI = 2;
+        public final static short NFC = 3;
+        public final static short BLUETOOTH_LE = 4;
     }
 
     private final long androidVersion = android.os.Build.VERSION.SDK_INT;
-    private final String deviceInfo = Build.MANUFACTURER+"/"+Build.MODEL;
+
+
+    private final String deviceInfo = Build.MANUFACTURER + "/" + Build.MODEL;
 
     private final short connectionTechnology;
 
@@ -29,13 +33,17 @@ public class BenchmarkResult extends UuidObject {
 
 
 
-    public BenchmarkResult(short connectionTechnology, long payloadSize, long bufferSize, long discoveryTime, long connectionTime, long transferTime){
+    private final long timestamp = System.currentTimeMillis();
+
+
+    public BenchmarkResult(short connectionTechnology, long payloadSize, long bufferSize, long discoveryTime, long connectionTime, long transferTime) {
         this.connectionTechnology = connectionTechnology;
         this.payloadSize = payloadSize;
         this.bufferSize = bufferSize;
         this.discoveryTime = discoveryTime;
         this.connectionTime = connectionTime;
         this.transferTime = transferTime;
+
     }
 
     public short getConnectionTechnology() {
@@ -62,15 +70,28 @@ public class BenchmarkResult extends UuidObject {
         return transferTime;
     }
 
-    public long latency(){
-        return this.connectionTime + this.discoveryTime;
+    public double latency() {
+        return (this.connectionTime + this.discoveryTime)/1000.0;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public long getAndroidVersion() {
+        return androidVersion;
+    }
+
+    public String getDeviceInfo() {
+        return deviceInfo;
     }
 
     /**
      * gives the bandwith in byte/milisecond
+     *
      * @return
      */
-    public double bandwidth(){
-        return (this.payloadSize*1.0)/(this.transferTime*1.0);
+    public double bandwidth() {
+        return ((this.payloadSize / 1024.0) / (this.transferTime * 1.0))*1000.0;
     }
 }

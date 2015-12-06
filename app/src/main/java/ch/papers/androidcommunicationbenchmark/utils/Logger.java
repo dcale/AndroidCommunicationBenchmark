@@ -1,10 +1,7 @@
 package ch.papers.androidcommunicationbenchmark.utils;
 
-import android.text.Html;
 import android.util.Log;
-import android.widget.TextView;
 
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +12,11 @@ import java.util.List;
  */
 public class Logger {
     private static final Logger INSTANCE = new Logger();
-    private TextView textView  = null;
+    private final List<OnLogChangedListener> logChangedListeners = new ArrayList();
+
+    public interface OnLogChangedListener {
+        public void onLogChanged(final String tag, final String log);
+    }
 
     private Logger() {
 
@@ -25,19 +26,18 @@ public class Logger {
         return INSTANCE;
     }
 
-    public void bindTextView(TextView textView){
-        this.textView = textView;
+    public void registerOnLogChangedListener(OnLogChangedListener onLogChangedListener){
+        this.logChangedListeners.add(onLogChangedListener);
+    }
+
+    public void unregisterOnLogChangedListener(OnLogChangedListener onLogChangedListener){
+        this.logChangedListeners.remove(onLogChangedListener);
     }
 
     public void log(final String tag, final String message){
         Log.d(tag, message);
-        if(textView!=null){
-            textView.post(new Runnable() {
-                @Override
-                public void run() {
-                    textView.setText(textView.getText() +tag+": "+ message + "\n");
-                }
-            });
+        for (final OnLogChangedListener onLogChangedListener:this.logChangedListeners) {
+            onLogChangedListener.onLogChanged(tag, message);
         }
     }
 }
