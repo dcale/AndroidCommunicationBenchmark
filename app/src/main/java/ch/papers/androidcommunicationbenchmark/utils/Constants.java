@@ -18,4 +18,5 @@ public class Constants {
     public final static int DEFAULT_PAYLOAD_SIZE = 4096;
     public final static int DISCOVERABLE_DURATION = 300;
     public static final Gson GSON = new Gson();
+    public static final UUID CHARACTERISTIC_UUID = UUID.fromString("f38881f8-c73b-4a02-94a6-a87a8a351ddd");
 }

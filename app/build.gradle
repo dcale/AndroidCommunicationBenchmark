@@ -6,11 +6,12 @@ android {
 
     defaultConfig {
         applicationId "ch.papers.androidcommunicationbenchmark"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
+
     buildTypes {
         release {
             minifyEnabled false

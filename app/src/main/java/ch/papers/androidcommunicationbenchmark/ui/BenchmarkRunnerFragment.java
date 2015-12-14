@@ -13,6 +13,8 @@ import android.widget.TextView;
 import ch.papers.androidcommunicationbenchmark.R;
 import ch.papers.androidcommunicationbenchmark.communication.Client;
 import ch.papers.androidcommunicationbenchmark.communication.Server;
+import ch.papers.androidcommunicationbenchmark.communication.bluetooth.le.BluetoothLEClient;
+import ch.papers.androidcommunicationbenchmark.communication.bluetooth.le.BluetoothLEServer;
 import ch.papers.androidcommunicationbenchmark.communication.bluetooth.rfcomm.BluetoothRfcommClient;
 import ch.papers.androidcommunicationbenchmark.communication.bluetooth.rfcomm.BluetoothRfcommServer;
 import ch.papers.androidcommunicationbenchmark.communication.nfc.beam.NFCServer;
@@ -48,6 +50,9 @@ public class BenchmarkRunnerFragment extends Fragment {
             logTextView.post(new Runnable() {
                 @Override
                 public void run() {
+                    if (logTextView.getText().length()>1000){
+                        logTextView.setText(logTextView.getText().subSequence(1000,logTextView.getText().length()));
+                    }
                     logTextView.setText(logTextView.getText() + tag + "\t\t" + log + "\n");
                     scrollView.fullScroll(View.FOCUS_DOWN);
                 }
@@ -71,8 +76,8 @@ public class BenchmarkRunnerFragment extends Fragment {
                 this.getActivity().setTitle(R.string.bluetooth_rfcomm_benchmark);
                 break;
             case BenchmarkResult.ConnectionTechonology.BLUETOOTH_LE:
-                this.server = new BluetoothRfcommServer(this.getActivity());
-                this.client = new BluetoothRfcommClient(this.getActivity());
+                this.server = new BluetoothLEServer(this.getActivity());
+                this.client = new BluetoothLEClient(this.getActivity());
                 this.getActivity().setTitle(R.string.bluetooth_le_benchmark);
                 break;
             case BenchmarkResult.ConnectionTechonology.WIFI:

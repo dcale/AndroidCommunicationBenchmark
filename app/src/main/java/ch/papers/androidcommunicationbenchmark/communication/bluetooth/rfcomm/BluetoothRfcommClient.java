@@ -32,6 +32,8 @@ public class BluetoothRfcommClient implements Client{
     private final Map<String, Long> connectTimes = new HashMap<String, Long>();
     private final Map<String, Long> transferTimes = new HashMap<String, Long>();
 
+    private long startTime = 0;
+
     private OnResultListener<BenchmarkResult> benchmarkOnResultListener;
 
     private final Context context;
@@ -55,7 +57,7 @@ public class BluetoothRfcommClient implements Client{
     };
 
 
-    private long startTime = 0;
+
 
     public BluetoothRfcommClient(Context context) {
         this.context = context;

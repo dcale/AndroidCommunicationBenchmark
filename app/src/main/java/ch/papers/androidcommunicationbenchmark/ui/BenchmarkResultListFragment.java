@@ -30,8 +30,13 @@ public class BenchmarkResultListFragment extends Fragment {
 
         UuidObjectStorage.getInstance().<BenchmarkResult>getEntriesAsList(new OnResultListener<List<BenchmarkResult>>() {
             @Override
-            public void onSuccess(List<BenchmarkResult> result) {
-                listView.setAdapter(new BenchmarkResultListAdapter(getActivity(),result));
+            public void onSuccess(final List<BenchmarkResult> result) {
+                listView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listView.setAdapter(new BenchmarkResultListAdapter(getActivity(),result));
+                    }
+                });
             }
 
             @Override
