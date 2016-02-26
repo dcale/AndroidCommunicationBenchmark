@@ -11,6 +11,8 @@ import ch.papers.androidcommunicationbenchmark.utils.Logger;
  * a.decarli@papers.ch
  */
 public class NFCProtocolService extends HostApduService {
+
+
     @Override
     public byte[] processCommandApdu(byte[] commandApdu, Bundle extras) {
         if (this.selectAidApdu(commandApdu)) {

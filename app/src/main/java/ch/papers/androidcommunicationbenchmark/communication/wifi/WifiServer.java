@@ -1,15 +1,18 @@
 package ch.papers.androidcommunicationbenchmark.communication.wifi;
 
 import android.content.Context;
+import android.content.pm.FeatureInfo;
+import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import ch.papers.androidcommunicationbenchmark.utils.Constants;
+import ch.papers.androidcommunicationbenchmark.communication.AbstractServer;
 import ch.papers.androidcommunicationbenchmark.communication.EchoServerHandler;
-import ch.papers.androidcommunicationbenchmark.communication.Server;
+import ch.papers.androidcommunicationbenchmark.utils.Constants;
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
 
 /**
@@ -17,35 +20,65 @@ import ch.papers.androidcommunicationbenchmark.utils.Logger;
  * Papers.ch
  * a.decarli@papers.ch
  */
-public class WifiServer implements Server {
-    private final Context context;
+public class WifiServer extends AbstractServer {
+    private final static String TAG = "wifiserver";
 
-    private boolean isRunning = false;
     private ServerSocket serverSocket;
+    private WifiP2pManager manager;
+    private WifiP2pManager.Channel channel;
+
+    private final WifiP2pManager.ActionListener actionListener = new WifiP2pManager.ActionListener() {
+        @Override
+        public void onSuccess() {
+            Logger.getInstance().log(TAG, "discovery success");
+        }
+
+        @Override
+        public void onFailure(int reason) {
+            Logger.getInstance().log(TAG, "discovery error");
+        }
+    };
 
     public WifiServer(Context context) {
-        this.context = context;
+        super(context);
+    }
+
+    @Override
+    public boolean isSupported() {
+        // see http://stackoverflow.com/questions/23828487/how-can-i-check-my-android-device-support-wifi-direct
+        PackageManager pm = this.getContext().getPackageManager();
+        FeatureInfo[] features = pm.getSystemAvailableFeatures();
+        for (FeatureInfo info : features) {
+            if (info != null && info.name != null && info.name.equalsIgnoreCase("android.hardware.wifi.direct")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public void start() {
+        WifiManager wifiManager = (WifiManager)this.getContext().getSystemService(Context.WIFI_SERVICE);
+        wifiManager.setWifiEnabled(true);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                isRunning = true;
+                setRunning(true);
                 try {
                     makeDiscoverable();
-                    serverSocket = new ServerSocket(Constants.SERVER_PORT);
+                    serverSocket = new ServerSocket(Constants.ECHO_SERVER_PORT);
                     Socket socket;
-                    while ((socket = serverSocket.accept()) != null && isRunning) {
-                        Logger.getInstance().log("wifiserver", "accepted connection");
+                    while ((socket = serverSocket.accept()) != null && isRunning()) {
+                        Logger.getInstance().log(TAG, "accepted connection");
                         new Thread(new EchoServerHandler(socket.getInputStream(), socket.getOutputStream())).start();
                     }
                 } catch (IOException e) {
-                    Logger.getInstance().log("wifiserver", "server stopped running: " + e.getMessage());
+                    Logger.getInstance().log(TAG, "server stopped running: " + e.getMessage());
                 }
             }
         }).start();
+
     }
 
     @Override
@@ -55,22 +88,15 @@ public class WifiServer implements Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.isRunning = false;
+
+        this.manager.stopPeerDiscovery(channel, actionListener);
+        this.manager.removeGroup(channel,actionListener);
+        this.setRunning(false);
     }
 
-    private void makeDiscoverable(){
-        WifiP2pManager manager = (WifiP2pManager) this.context.getSystemService(Context.WIFI_P2P_SERVICE);
-        WifiP2pManager.Channel channel = manager.initialize(this.context, this.context.getMainLooper(), null);
-        manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Logger.getInstance().log("wifiserver", "discovery success");
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Logger.getInstance().log("wifiserver", "discovery error");
-            }
-        });
+    private void makeDiscoverable() {
+        this.manager = (WifiP2pManager) this.getContext().getSystemService(Context.WIFI_P2P_SERVICE);
+        this.channel = this.manager.initialize(this.getContext(), this.getContext().getMainLooper(), null);
+        this.manager.createGroup(channel, actionListener);
     }
 }

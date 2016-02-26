@@ -1,5 +1,7 @@
 package ch.papers.androidcommunicationbenchmark.ui;
 
+import android.content.Context;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
@@ -11,8 +13,9 @@ import android.view.MenuItem;
 
 import ch.papers.androidcommunicationbenchmark.R;
 import ch.papers.androidcommunicationbenchmark.models.BenchmarkResult;
+import ch.papers.androidcommunicationbenchmark.utils.Constants;
 import ch.papers.androidcommunicationbenchmark.utils.Preferences;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.UuidObjectStorage;
+import ch.papers.objectstorage.UuidObjectStorage;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +23,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        UuidObjectStorage.getInstance().init(this);
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
+        if(adapter != null) {
+            adapter.setNdefPushMessage(null, this, this);
+        }
+        UuidObjectStorage.getInstance().init(this.getDir(Constants.PATH, Context.MODE_PRIVATE));
         Preferences.getInstance().init(this);
 
         setContentView(R.layout.activity_main);
@@ -64,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.navigation_preferences:
                         transaction.replace(R.id.container, PreferencesFragment.newInstance());
+                        break;
+                    case R.id.navigation_authentication:
+                        transaction.replace(R.id.container, AuthenticationFragment.newInstance());
                         break;
                 }
                 transaction.commit();

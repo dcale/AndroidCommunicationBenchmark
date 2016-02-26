@@ -8,9 +8,9 @@ import android.content.Intent;
 
 import java.io.IOException;
 
-import ch.papers.androidcommunicationbenchmark.utils.Constants;
+import ch.papers.androidcommunicationbenchmark.communication.AbstractServer;
 import ch.papers.androidcommunicationbenchmark.communication.EchoServerHandler;
-import ch.papers.androidcommunicationbenchmark.communication.Server;
+import ch.papers.androidcommunicationbenchmark.utils.Constants;
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
 
 /**
@@ -20,40 +20,41 @@ import ch.papers.androidcommunicationbenchmark.utils.Logger;
  */
 
 
-public class BluetoothRfcommServer implements Server {
-
-
+public class BluetoothRfcommServer extends AbstractServer {
 
     private final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private final Context context;
+    private final static String TAG = "blueserverRFCOMM";
 
-
-    private boolean isRunning = false;
     private BluetoothServerSocket serverSocket;
 
     public BluetoothRfcommServer(Context context) {
-        this.context = context;
+        super(context);
     }
 
+    @Override
+    public boolean isSupported() {
+        return true;
+    }
 
     @Override
     public void start() {
+        this.makeDiscoverable();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                if(!isRunning) {
-                    isRunning = true;
+                if (!isRunning()) {
+                    setRunning(true);
                     try {
-                        makeDiscoverable();
                         serverSocket = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(Constants.BROADCAST_NAME, Constants.SERVICE_UUID);
                         BluetoothSocket socket;
-                        while ((socket = serverSocket.accept()) != null && isRunning) {
-                            Logger.getInstance().log("blueserver", "accepted connection");
+                        while ((socket = serverSocket.accept()) != null && isRunning()) {
+                            Logger.getInstance().log(TAG, "accepted connection");
                             new Thread(new EchoServerHandler(socket.getInputStream(), socket.getOutputStream())).start();
                         }
                     } catch (IOException e) {
-                        Logger.getInstance().log("blueserver", "server stopped running: " + e.getMessage());
+                        Logger.getInstance().log(TAG, "server stopped running: " + e.getMessage());
                     }
+                    setRunning(false);
                 }
             }
         }).start();
@@ -61,21 +62,29 @@ public class BluetoothRfcommServer implements Server {
 
     @Override
     public void stop() {
-        if(this.isRunning) {
+        if (this.isRunning()) {
             try {
                 this.serverSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.getInstance().log(TAG, "server stopped running: " + e.getMessage());
             }
-            this.isRunning = false;
+            this.setRunning(false);
         }
     }
 
     private void makeDiscoverable() {
+        if (!this.bluetoothAdapter.isEnabled()) {
+            if (this.bluetoothAdapter.enable()) {
+                Logger.getInstance().log(TAG, "enabling blueooth");
+            } else {
+                Logger.getInstance().log(TAG, "enabling not possible at the moment");
+            }
+        }
+
         Intent discoverableIntent = new
                 Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, Constants.DISCOVERABLE_DURATION);
-        this.context.startActivity(discoverableIntent);
+        this.getContext().startActivity(discoverableIntent);
     }
 }
 

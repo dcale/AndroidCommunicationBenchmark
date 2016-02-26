@@ -1,25 +1,27 @@
 package ch.papers.androidcommunicationbenchmark.communication.nfc.hostemulation;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.provider.Settings;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-import ch.papers.androidcommunicationbenchmark.communication.Client;
+import ch.papers.androidcommunicationbenchmark.communication.AbstractClient;
 import ch.papers.androidcommunicationbenchmark.models.BenchmarkResult;
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
 import ch.papers.androidcommunicationbenchmark.utils.Preferences;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.listeners.OnResultListener;
 
 /**
  * Created by Alessandro De Carli (@a_d_c_) on 06/12/15.
  * Papers.ch
  * a.decarli@papers.ch
  */
-public class NFCClient implements Client {
+public class NFCClient extends AbstractClient {
+    private final static String TAG = "nfcclient";
 
     private static final byte[] CLA_INS_P1_P2 = { (byte)0x00, (byte)0xA4, (byte)0x04, (byte)0x00 };
     private static final byte[] AID_ANDROID = { (byte)0xF0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
@@ -37,61 +39,78 @@ public class NFCClient implements Client {
 
     private final Activity activity;
     private final NfcAdapter nfcAdapter;
-    private long startTime = 0;
 
     public NFCClient(Activity activity) {
-
+        super(activity);
         this.activity = activity;
         this.nfcAdapter = NfcAdapter.getDefaultAdapter(this.activity);
     }
 
     @Override
-    public void startBenchmark(final OnResultListener<BenchmarkResult> benchmarkOnResultListener) {
-        this.startTime = System.currentTimeMillis();
+    public boolean isSupported() {
+        return (this.nfcAdapter != null);
+    }
+
+    @Override
+    public void stop() {
+        nfcAdapter.disableReaderMode(this.activity);
+    }
+
+    @Override
+    public short getConnectionTechnology() {
+        return BenchmarkResult.ConnectionTechonology.NFC;
+    }
+
+    @Override
+    protected void startBenchmark() {
+
+        if (!nfcAdapter.isEnabled())
+        {
+            this.activity.startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+            return;
+        }
+
+
         nfcAdapter.enableReaderMode(this.activity, new NfcAdapter.ReaderCallback() {
                     @Override
                     public void onTagDiscovered(Tag tag) {
                         try {
-                            final long discoveryTime = System.currentTimeMillis() - startTime;
+                            getDiscoveryTimes().put(tag.toString(),System.currentTimeMillis());
+
                             IsoDep isoDep = IsoDep.get(tag);
                             isoDep.connect();
 
                             byte[] response = isoDep.transceive(createSelectAidApdu(AID_ANDROID));
-                            final long connectTime = System.currentTimeMillis() - discoveryTime - startTime;
-                            Logger.getInstance().log("nfcclient","is connected "+isoDep.isConnected());
-                            Logger.getInstance().log("nfcclient","is extended apdu supported "+isoDep.isExtendedLengthApduSupported());
+                            getConnectTimes().put(tag.toString(),System.currentTimeMillis());
+                            Logger.getInstance().log(TAG,"is connected "+isoDep.isConnected());
+                            Logger.getInstance().log(TAG,"is extended apdu supported "+isoDep.isExtendedLengthApduSupported());
 
                             byte[] payload = new byte[Preferences.getInstance().getPayloadSize()];
                             Arrays.fill(payload, (byte) 1);
 
                             for (int i = 0; i < Preferences.getInstance().getCycleCount(); i++) {
                                 int byteCounter = 0;
-                                Logger.getInstance().log("nfcclient", "cycle: " + i);
+                                Logger.getInstance().log(TAG, "cycle: " + i);
                                 while(byteCounter < payload.length){
                                     byte[] fragment = Arrays.copyOfRange(payload,byteCounter,byteCounter+isoDep.getMaxTransceiveLength());
-                                    Logger.getInstance().log("nfcclient", "sending bytes: " + fragment.length);
+                                    Logger.getInstance().log(TAG, "sending bytes: " + fragment.length);
                                     response = isoDep.transceive(fragment);
-                                    Logger.getInstance().log("nfcclient", "receiving bytes: " + response.length);
+                                    Logger.getInstance().log(TAG, "receiving bytes: " + response.length);
                                     byteCounter += fragment.length;
                                 }
                             }
 
                             isoDep.transceive("CLOSE".getBytes());
                             isoDep.close();
-                            final long transferTime = System.currentTimeMillis() - connectTime - discoveryTime - startTime;
-
-                            benchmarkOnResultListener.onSuccess(new BenchmarkResult(BenchmarkResult.ConnectionTechonology.NFC,
-                                    Preferences.getInstance().getPayloadSize() * Preferences.getInstance().getCycleCount(), Preferences.getInstance().getPayloadSize(),
-                                    discoveryTime, connectTime,  transferTime));
-
+                            getTransferTimes().put(tag.toString(),System.currentTimeMillis());
+                            endBenchmark(tag.toString());
                         } catch (IOException e) {
-                            Logger.getInstance().log("nfcclient", e.getMessage());
+                            Logger.getInstance().log(TAG, e.getMessage());
                         }
                     }
                 }, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
                 null);
     }
-
 
     private byte[] createSelectAidApdu(byte[] aid) {
         byte[] result = new byte[6 + aid.length];

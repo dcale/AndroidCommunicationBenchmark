@@ -26,5 +26,9 @@
             android:id="@+id/navigation_preferences"
             android:icon="@drawable/ic_settings"
             android:title="@string/preferences" />
+        <item
+            android:id="@+id/navigation_authentication"
+            android:icon="@drawable/ic_action_eye_open"
+            android:title="@string/authview" />
     </group>
 </menu>

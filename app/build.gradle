@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "ch.papers.androidcommunicationbenchmark"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
     }
@@ -28,4 +28,5 @@ dependencies {
     compile 'com.android.support:design:23.+'
     compile 'com.google.code.gson:gson:2.5'
     compile 'com.google.android.gms:play-services-appindexing:8.1.0'
+    compile project(path: ':objectstorage')
 }

@@ -1,10 +1,12 @@
 package ch.papers.androidcommunicationbenchmark.communication.nfc.beam;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
+import android.provider.Settings;
 
 import java.util.Arrays;
 
@@ -32,7 +34,18 @@ public class NFCServer implements Server {
     }
 
     @Override
+    public boolean isSupported() {
+        return (this.nfcAdapter != null);
+    }
+
+    @Override
     public void start() {
+        if (!nfcAdapter.isEnabled())
+        {
+            this.activity.startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+            return;
+        }
+
         this.nfcAdapter.setNdefPushMessageCallback(new NfcAdapter.CreateNdefMessageCallback() {
             @Override
             public NdefMessage createNdefMessage(NfcEvent event) {

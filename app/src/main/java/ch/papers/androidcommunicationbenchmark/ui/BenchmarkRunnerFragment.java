@@ -10,6 +10,9 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ch.papers.androidcommunicationbenchmark.R;
 import ch.papers.androidcommunicationbenchmark.communication.Client;
 import ch.papers.androidcommunicationbenchmark.communication.Server;
@@ -22,10 +25,12 @@ import ch.papers.androidcommunicationbenchmark.communication.nfc.hostemulation.N
 import ch.papers.androidcommunicationbenchmark.communication.wifi.WifiClient;
 import ch.papers.androidcommunicationbenchmark.communication.wifi.WifiServer;
 import ch.papers.androidcommunicationbenchmark.models.BenchmarkResult;
+import ch.papers.androidcommunicationbenchmark.utils.FixedSizeArrayList;
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
 import ch.papers.androidcommunicationbenchmark.utils.Logger.OnLogChangedListener;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.UuidObjectStorage;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.listeners.OnResultListener;
+import ch.papers.objectstorage.UuidObjectStorage;
+import ch.papers.objectstorage.listeners.DummyOnResultListener;
+import ch.papers.objectstorage.listeners.OnResultListener;
 
 /**
  * Created by Alessandro De Carli (@a_d_c_) on 15/11/15.
@@ -41,19 +46,35 @@ public class BenchmarkRunnerFragment extends Fragment {
     private boolean isServerRunning = false;
     private boolean isClientRunning = false;
 
+    private Button serverButton;
+    private Button clientButton;
+
 
     private final OnLogChangedListener onLogChangedListener = new OnLogChangedListener(){
+        private final int tagSize=20;
+        private final List<String> logBuffer = new FixedSizeArrayList<String>(50);
+
         @Override
-        public void onLogChanged(final String tag, final String log) {
+        public synchronized void onLogChanged(final String tag, final String log) {
+            String displayTag = (tag+"                       ").substring(0,tagSize); //every tag has same length
+            this.logBuffer.add(displayTag + log);
+
             final ScrollView scrollView = (ScrollView) getView().findViewById(R.id.logScrollView);
             final TextView logTextView = (TextView) getView().findViewById(R.id.logTextView);
             logTextView.post(new Runnable() {
+
                 @Override
                 public void run() {
-                    if (logTextView.getText().length()>1000){
-                        logTextView.setText(logTextView.getText().subSequence(1000,logTextView.getText().length()));
+
+                    displayBuffer();
+                }
+
+                private void displayBuffer(){
+                    String fullLog = "";
+                    for(String log : new ArrayList<String>(logBuffer)){
+                        fullLog += log+"\n";
                     }
-                    logTextView.setText(logTextView.getText() + tag + "\t\t" + log + "\n");
+                    logTextView.setText(fullLog);
                     scrollView.fullScroll(View.FOCUS_DOWN);
                 }
             });
@@ -91,6 +112,19 @@ public class BenchmarkRunnerFragment extends Fragment {
                 this.getActivity().setTitle(R.string.nfc_benchmark);
                 break;
         }
+
+        if(this.server.isSupported()){
+            this.serverButton.setVisibility(View.VISIBLE);
+        } else {
+            this.serverButton.setVisibility(View.GONE);
+        }
+
+        if(this.client.isSupported()){
+            this.clientButton.setVisibility(View.VISIBLE);
+        } else {
+            this.clientButton.setVisibility(View.GONE);
+        }
+
         Logger.getInstance().registerOnLogChangedListener(onLogChangedListener);
     }
 
@@ -98,8 +132,13 @@ public class BenchmarkRunnerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.benchmark_runner_fragment, container, false);
-        view.findViewById(R.id.startServerButton).setOnClickListener(this.onStartServerButtonClickedListener);
-        view.findViewById(R.id.startClientButton).setOnClickListener(this.onStartClientButtonClickedListener);
+
+        serverButton = (Button)view.findViewById(R.id.startServerButton);
+        serverButton.setOnClickListener(this.onStartServerButtonClickedListener);
+
+        clientButton = (Button)view.findViewById(R.id.startClientButton);
+        clientButton.setOnClickListener(this.onStartClientButtonClickedListener);
+
         return view;
     }
 
@@ -125,12 +164,13 @@ public class BenchmarkRunnerFragment extends Fragment {
             Button startButton = (Button) v;
             if (isClientRunning) {
                 startButton.setText(R.string.stop_client);
-                client.startBenchmark(new OnResultListener<BenchmarkResult>() {
+                client.start(new OnResultListener<BenchmarkResult>() {
                     @Override
                     public void onSuccess(BenchmarkResult result) {
                         UuidObjectStorage.getInstance().addEntry(result, new OnResultListener<BenchmarkResult>() {
                             @Override
                             public void onSuccess(BenchmarkResult result) {
+                                UuidObjectStorage.getInstance().commit(DummyOnResultListener.getInstance());
                                 Snackbar.make(getView(), R.string.benchmark_stored, Snackbar.LENGTH_SHORT).show();
                             }
 
@@ -148,6 +188,7 @@ public class BenchmarkRunnerFragment extends Fragment {
                     }
                 });
             } else {
+                client.stop();
                 startButton.setText(R.string.start_client);
             }
         }

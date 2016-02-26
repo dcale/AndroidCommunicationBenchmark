@@ -12,8 +12,8 @@ import java.util.List;
 import ch.papers.androidcommunicationbenchmark.R;
 import ch.papers.androidcommunicationbenchmark.models.BenchmarkResult;
 import ch.papers.androidcommunicationbenchmark.utils.Logger;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.UuidObjectStorage;
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.listeners.OnResultListener;
+import ch.papers.objectstorage.UuidObjectStorage;
+import ch.papers.objectstorage.listeners.OnResultListener;
 
 /**
  * Created by Alessandro De Carli (@a_d_c_) on 04/12/15.
@@ -31,17 +31,17 @@ public class BenchmarkResultListFragment extends Fragment {
         UuidObjectStorage.getInstance().<BenchmarkResult>getEntriesAsList(new OnResultListener<List<BenchmarkResult>>() {
             @Override
             public void onSuccess(final List<BenchmarkResult> result) {
-                listView.post(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        listView.setAdapter(new BenchmarkResultListAdapter(getActivity(),result));
+                        listView.setAdapter(new BenchmarkResultListAdapter(getActivity(), result));
                     }
                 });
             }
 
             @Override
             public void onError(String message) {
-                Logger.getInstance().log("listadapter","error "+message);
+                Logger.getInstance().log("listadapter", "error " + message);
             }
         }, BenchmarkResult.class);
         this.getActivity().setTitle(R.string.list_benchmark);

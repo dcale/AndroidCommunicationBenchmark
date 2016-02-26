@@ -2,14 +2,15 @@ package ch.papers.androidcommunicationbenchmark.models;
 
 import android.os.Build;
 
-import ch.papers.androidcommunicationbenchmark.utils.objectstorage.models.UuidObject;
+import ch.papers.objectstorage.models.AbstractUuidObject;
+
 
 /**
  * Created by Alessandro De Carli (@a_d_c_) on 21/11/15.
  * Papers.ch
  * a.decarli@papers.ch
  */
-public class BenchmarkResult extends UuidObject {
+public class BenchmarkResult extends AbstractUuidObject {
     public class ConnectionTechonology {
         public final static short BLUETOOTH_RFCOMM = 1;
         public final static short WIFI = 2;

@@ -28,5 +28,6 @@
     <string name="pref_payload_size">Payload Size</string>
     <string name="pref_payload_size_summary">How big is the payload size</string>
     <string name="benchmark_preferences">Benchmark Preferences</string>
+    <string name="authview">Auth View</string>
 
 </resources>

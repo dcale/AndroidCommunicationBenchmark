@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="runner-0.4.1">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/objectstorage/build/intermediates/exploded-aar/com.android.support.test/runner/0.4.1/res" />
+      <root url="jar://$PROJECT_DIR$/objectstorage/build/intermediates/exploded-aar/com.android.support.test/runner/0.4.1/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar:///Applications/AndroidDevelopment/sdk/extras/android/m2repository/com/android/support/test/runner/0.4.1/runner-0.4.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
