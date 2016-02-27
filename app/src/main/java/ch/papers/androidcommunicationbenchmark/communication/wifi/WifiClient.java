@@ -184,6 +184,14 @@ public class WifiClient extends AbstractClient {
 
         manager = (WifiP2pManager) this.getContext().getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this.getContext(), this.getContext().getMainLooper(), null);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        filter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+        this.getContext().registerReceiver(this.broadcastReceiver, filter);
+
         manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -196,12 +204,7 @@ public class WifiClient extends AbstractClient {
             }
         });
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-        this.getContext().registerReceiver(this.broadcastReceiver, filter);
+
 
 
     }

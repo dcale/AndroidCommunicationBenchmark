@@ -56,7 +56,25 @@ public class BluetoothLEServer extends AbstractServer {
                 @Override
                 public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
                     super.onConnectionStateChange(device, status, newState);
-                    Logger.getInstance().log(TAG, device.getAddress() + " changed connection state");
+
+
+                    switch (newState){
+                        case BluetoothGatt.STATE_CONNECTING:
+                            Logger.getInstance().log(TAG, device.getAddress() + " changed connection state to connecting");
+                            break;
+                        case BluetoothGatt.STATE_CONNECTED:
+                            Logger.getInstance().log(TAG, device.getAddress() + " changed connection state to connected");
+                            break;
+                        case BluetoothGatt.STATE_DISCONNECTING:
+                            Logger.getInstance().log(TAG, device.getAddress() + " changed connection state to disconnecting");
+                            break;
+                        case BluetoothGatt.STATE_DISCONNECTED:
+                            Logger.getInstance().log(TAG, device.getAddress() + " changed connection state to disconnected");
+                            break;
+                        default:
+                            Logger.getInstance().log(TAG, device.getAddress() + " changed connection state to "+newState);
+                            break;
+                    }
 
                 }
 
@@ -72,16 +90,18 @@ public class BluetoothLEServer extends AbstractServer {
                     Logger.getInstance().log(TAG, device.getAddress() + " requested characteristic write with " + value.length + " payload");
                     BluetoothLEServer.this.value = value;
                     BluetoothLEServer.this.offset = offset;
-                    bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, new byte[]{1});
+                    //bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, new byte[]{1});
                 }
 
             });
 
 
 
-            BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(Constants.CHARACTERISTIC_UUID, BluetoothGattCharacteristic.PROPERTY_WRITE, BluetoothGattCharacteristic.PERMISSION_WRITE);
+            BluetoothGattCharacteristic writeCharacteristic = new BluetoothGattCharacteristic(Constants.WRITE_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE, BluetoothGattCharacteristic.PERMISSION_WRITE);
+            BluetoothGattCharacteristic readCharacteristic = new BluetoothGattCharacteristic(Constants.READ_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.PROPERTY_READ, BluetoothGattCharacteristic.PERMISSION_READ);
             BluetoothGattService service = new BluetoothGattService(Constants.SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);
-            service.addCharacteristic(characteristic);
+            service.addCharacteristic(writeCharacteristic);
+            service.addCharacteristic(readCharacteristic);
 
 
             bluetoothGattServer.addService(service);

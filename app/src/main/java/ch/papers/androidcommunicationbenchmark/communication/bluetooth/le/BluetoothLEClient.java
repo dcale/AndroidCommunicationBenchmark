@@ -27,7 +27,7 @@ public class BluetoothLEClient extends AbstractClient {
 
     private final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private final static int MAX_MTU = 300;
-    private final static int MAX_FRAGMENT_SIZE = MAX_MTU - 2;
+    private final static int MAX_FRAGMENT_SIZE = MAX_MTU - 3;
     private boolean isRunning = false;
 
     private final BluetoothAdapter.LeScanCallback leScanCallback = new BluetoothAdapter.LeScanCallback() {
@@ -49,29 +49,45 @@ public class BluetoothLEClient extends AbstractClient {
                         gatt.requestMtu(MAX_MTU);
                     }
 
-                    Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state");
+                    switch (newState){
+                        case BluetoothGatt.STATE_CONNECTING:
+                            Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state to connecting");
+                            break;
+                        case BluetoothGatt.STATE_CONNECTED:
+                            Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state to connected");
+                            break;
+                        case BluetoothGatt.STATE_DISCONNECTING:
+                            Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state to disconnecting");
+                            break;
+                        case BluetoothGatt.STATE_DISCONNECTED:
+                            Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state to disconnected");
+                            break;
+                        default:
+                            Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state to "+newState);
+                            break;
+                    }
                 }
 
                 @Override
                 public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                     super.onMtuChanged(gatt, mtu, status);
                     gatt.discoverServices();
-                    Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " changed connection state");
+                    Logger.getInstance().log(TAG, mtu + " mtu changed");
                 }
 
                 @Override
                 public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                    super.onServicesDiscovered(gatt,status);
                     Logger.getInstance().log(TAG, "discovered service:" + status);
                     getConnectTimes().put(gatt.getDevice().getAddress(), System.currentTimeMillis());
-                    BluetoothGattCharacteristic characteristic = gatt.getService(Constants.SERVICE_UUID).getCharacteristic(Constants.CHARACTERISTIC_UUID);
-
-                    Logger.getInstance().log(TAG, "got characteristics:" + characteristic.getPermissions());
+                    BluetoothGattCharacteristic writeCharacteristic = gatt.getService(Constants.SERVICE_UUID).getCharacteristic(Constants.WRITE_CHARACTERISTIC_UUID);
+                    Logger.getInstance().log(TAG, "got characteristics:" + writeCharacteristic.getPermissions());
 
                     byte[] fragment = Arrays.copyOfRange(payload, byteCounter, byteCounter + MAX_FRAGMENT_SIZE);
                     Logger.getInstance().log(TAG, "sending bytes: " + fragment.length);
 
-                    characteristic.setValue(fragment);
-                    gatt.writeCharacteristic(characteristic);
+                    writeCharacteristic.setValue(fragment);
+                    gatt.writeCharacteristic(writeCharacteristic);
                     byteCounter += fragment.length;
 
                 }
@@ -81,14 +97,9 @@ public class BluetoothLEClient extends AbstractClient {
 
                 @Override
                 public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                    super.onCharacteristicRead(gatt, characteristic, status);
+                    super.onCharacteristicRead(gatt,characteristic,status);
+                    Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " read characteristic:" + status);
                     Logger.getInstance().log(TAG, "read receiving bytes: " + characteristic.getValue().length);
-                }
-
-                @Override
-                public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                    Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " wrote characteristic:" + status);
-                    Logger.getInstance().log(TAG, "write receiving bytes: " + characteristic.getValue().length);
 
                     if (byteCounter < payload.length && isRunning) {
                         byte[] payload = new byte[Preferences.getInstance().getPayloadSize() * Preferences.getInstance().getCycleCount()];
@@ -97,13 +108,24 @@ public class BluetoothLEClient extends AbstractClient {
                         byte[] fragment = Arrays.copyOfRange(payload, 0, MAX_FRAGMENT_SIZE);
                         Logger.getInstance().log(TAG, "sending bytes: " + fragment.length);
 
-                        characteristic.setValue(fragment);
-                        gatt.writeCharacteristic(characteristic);
+                        BluetoothGattCharacteristic writeCharacteristic = gatt.getService(Constants.SERVICE_UUID).getCharacteristic(Constants.WRITE_CHARACTERISTIC_UUID);
+                        writeCharacteristic.setValue(fragment);
+                        gatt.writeCharacteristic(writeCharacteristic);
                         byteCounter += fragment.length;
                     } else {
                         getTransferTimes().put(gatt.getDevice().getAddress(), System.currentTimeMillis());
                         endBenchmark(gatt.getDevice().getAddress());
                     }
+                }
+
+                @Override
+                public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                    super.onCharacteristicWrite(gatt,characteristic,status);
+                    Logger.getInstance().log(TAG, gatt.getDevice().getAddress() + " write characteristic:" + status);
+                    Logger.getInstance().log(TAG, "write receiving bytes: " + characteristic.getValue().length);
+
+                    BluetoothGattCharacteristic readCharacteristic = gatt.getService(Constants.SERVICE_UUID).getCharacteristic(Constants.READ_CHARACTERISTIC_UUID);
+                    gatt.readCharacteristic(readCharacteristic);
                 }
             });
 

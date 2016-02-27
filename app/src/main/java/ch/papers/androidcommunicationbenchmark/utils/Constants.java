@@ -20,5 +20,6 @@ public class Constants {
     public final static int DISCOVERABLE_DURATION = 300; //this is unlimited
     public static final Gson GSON = new Gson();
     public static final String PATH = "storage";
-    public static final UUID CHARACTERISTIC_UUID = UUID.fromString("f38881f8-c73b-4a02-94a6-a87a8a351ddd");
+    public static final UUID WRITE_CHARACTERISTIC_UUID = UUID.fromString("f38881f8-c73b-4a02-94a6-a87a8a351ddd");
+    public static final UUID READ_CHARACTERISTIC_UUID = UUID.fromString("f38881f8-c73b-4a02-94a6-a87a8a351dde");
 }
